@@ -20,7 +20,7 @@ async def on_ready():
             break
 
     print(
-        f'{client.user} is connected to the following guild:\n'
+        f'{client.user} is searching for nuts in:\n'
         f'{guild.name}(id: {guild.id})'
     )
 
@@ -29,10 +29,12 @@ async def on_message(message):
     if message.author == client.user:
         return
     #Array of words for the smack response
-    butts = ["butt", "ass", "bend over", "caboose", "tushy", "rump"  ]
+    butts = ["butt", "ass", "bend over", "caboose", "tushy", "rump", "booty", "peach",
+             "bends over", "keister", "heiny", "heinie", "posterior", "behind"]
+    messageContent = message.content.lower()
 
     #User requested response when "butt" or a similar word is sent 
-    if any(butt in message.content for butt in butts):
+    if any(butt in messageContent for butt in butts):
         response = '***smack*** ' #+ message.author.id 
         await message.channel.send(response)
         await message.add_reaction("🖐️")
