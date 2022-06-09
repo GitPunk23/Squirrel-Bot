@@ -9,39 +9,52 @@ load_dotenv()
 #print(os.getenv('DISCORD_TOKEN'))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-client = discord.Client()
+bot = commands.Bot(command_prefix=';')
 
 SMACKFLAG = True
 
-#ADMIN COMMANDS 
-#-ban
-#-kick 
-#-mute
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+    print(f'{bot.user} has connected to Discord!')
 
-    for guild in client.guilds:
+    for guild in bot.guilds:
         if guild.name == GUILD:
             break
 
     print(
-        f'{client.user} is searching for nuts in:\n'
+        f'{bot.user} is searching for nuts in:\n'
         f'{guild.name}(id: {guild.id})'
     )
 
+@bot.command(
+    brief='Prints an entry in the coordinates channel. Use: [Structure] [X coord] [Y coord] [Z coord] ["notes"]',
+    help='A command that will print out a list of coordinates in another channel for display.'
+)
+@commands.has_role('Crafter')
+async def coord(ctx, struc, x, y, z, notes=''): 
+    coordsCH = bot.get_channel(984518790681362492)
+
+    if x.isdigit() == False and y.isdigit() == False and z.isdigit() == False:
+        await ctx.send('Incorrect format\nExample: ;coord Mineshaft 50 15 -789 "A big mineshaft"\n(Description/Notes are optional)')
+        return
+
+    printString = ctx.message.author.mention + ' found a ' + struc + ' at:\nX: ' + x + '\nY: ' + y + '\nZ: ' + z
+    if (notes != ''):
+        printString += '\nThey said: ' + notes
+    await coordsCH.send(printString)  
+ 
+
 #ON MESSAGE EVENTS
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
+    await bot.process_commands(message)
+    if message.author == bot.user:
         return
 
     #Read message content as lowercase    
     messageContent = message.content.lower()
 
-#FUN 
-#SMACK
     #Array of words for the smack response
     butts = ["butt", "ass", "bend over", "caboose", "tushy", "rump", "booty", "peach",
              "bends over", "keister", "heiny", "heinie", "posterior", "behind", "dumpy", 
@@ -52,6 +65,7 @@ async def on_message(message):
         response = '***smack***'
         await message.channel.send(response)
         await message.add_reaction("🖐️")
+
     
 
-client.run(TOKEN)
+bot.run(TOKEN)
