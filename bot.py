@@ -9,7 +9,10 @@ load_dotenv()
 #print(os.getenv('DISCORD_TOKEN'))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-bot = commands.Bot(command_prefix=';')
+
+intents = discord.Intents.default() # or .all() if you ticked all, that is easier
+intents.members = True # If you ticked the SERVER MEMBERS INTENT
+bot = commands.Bot(command_prefix='$', intents=intents)
 
 SMACKFLAG = True
 
