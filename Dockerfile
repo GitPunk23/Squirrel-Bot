@@ -1,10 +1,18 @@
 FROM python:3
-FROM gorialis/discord.py
 
+# Upgrade pip and install python-dotenv
+RUN python -m pip install --upgrade pip
 RUN python -m pip install python-dotenv
-RUN mkdir -p /usr/src/bot
+
+# Install discord.py
+RUN python -m pip install discord.py
+
+# Set the working directory
 WORKDIR /usr/src/bot
 
+# Copy the entire current directory into the container
 COPY . .
 
-CMD [ "python3", "bot.py"]
+# Set the command to run your bot.py script
+CMD [ "python3", "bot.py" ]
+
