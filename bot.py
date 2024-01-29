@@ -5,17 +5,24 @@ import random
 from dotenv import load_dotenv
 from discord.ext import commands
 
+from pokernight import pokernight
+
 load_dotenv()
 #print(os.getenv('DISCORD_TOKEN'))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-intents = discord.Intents.default() # or .all() if you ticked all, that is easier
-intents.members = True # If you ticked the SERVER MEMBERS INTENT
+intents = discord.Intents.all()
+intents.members = True
+intents.messages = True  # Add this line to enable message content intent
 bot = commands.Bot(command_prefix='$', intents=intents)
+
 
 SMACKFLAG = True
 
+pokernight.setup(bot)
+
+print(bot.commands)
 
 @bot.event
 async def on_ready():
@@ -29,24 +36,6 @@ async def on_ready():
         f'{bot.user} is searching for nuts in:\n'
         f'{guild.name}(id: {guild.id})'
     )
-
-@bot.command(
-    brief='Prints an entry in the coordinates channel. Use: [Structure] [X coord] [Y coord] [Z coord] ["notes"]',
-    help='A command that will print out a list of coordinates in another channel for display.'
-)
-@commands.has_role('Crafter')
-async def coord(ctx, struc, x, y, z, notes=''): 
-    coordsCH = bot.get_channel(984518790681362492)
-
-    if x.isdigit() == False and y.isdigit() == False and z.isdigit() == False:
-        await ctx.send('Incorrect format\nExample: ;coord Mineshaft 50 15 -789 "A big mineshaft"\n(Description/Notes are optional)')
-        return
-
-    printString = ctx.message.author.mention + ' found a ' + struc + ' at:\nX: ' + x + '\nY: ' + y + '\nZ: ' + z
-    if (notes != ''):
-        printString += '\nThey said: ' + notes
-    await coordsCH.send(printString)  
- 
 
 #ON MESSAGE EVENTS
 @bot.event
