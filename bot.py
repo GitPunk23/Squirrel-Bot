@@ -1,28 +1,20 @@
 import os
-
 import discord
 import random
 from dotenv import load_dotenv
 from discord.ext import commands
-
 from pokernight import pokernight
 
 load_dotenv()
-#print(os.getenv('DISCORD_TOKEN'))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
 intents = discord.Intents.all()
 intents.members = True
 intents.messages = True  # Add this line to enable message content intent
-bot = commands.Bot(command_prefix='$', intents=intents)
-
-
-SMACKFLAG = True
+bot = commands.Bot(command_prefix=':', intents=intents)
 
 pokernight.setup(bot)
-
-print(bot.commands)
 
 @bot.event
 async def on_ready():
@@ -36,6 +28,11 @@ async def on_ready():
         f'{bot.user} is searching for nuts in:\n'
         f'{guild.name}(id: {guild.id})'
     )
+
+# ------------------------------------------------------------------------------------
+
+#VARIABLES
+SMACKFLAG = True
 
 #ON MESSAGE EVENTS
 @bot.event
