@@ -1,17 +1,13 @@
 {
-    "house_chips": 10000,
+    "house_chips": 0,
     "players": [
       {
-        "discord_username": "alice#1234",
-        "name": "Alice",
-        "email": "alice@example.com",
-        "phone": "555-1234"
-      },
-      {
-        "discord_username": "bob#5678",
-        "name": "Bob",
-        "email": "bob@example.com",
-        "phone": "555-5678"
+        "discord_username": "",
+        "name": "",
+        "email": "",
+        "phone": "",
+        "current_chips": 0,
+        "cash_in": 0 
       }
     ]
   }
