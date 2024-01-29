@@ -1,5 +1,6 @@
 from discord.ext import commands
 from datetime import datetime, timedelta
+from data_manager import data_manager
 
 next_poker_night = datetime.utcnow() + timedelta(days=7)
 house_chips = 10000
@@ -37,7 +38,15 @@ def setup(bot):
         # Calculate the duration of the poker night
         duration = poker_night_end_time - poker_night_start_time
 
-        await ctx.send(f"Poker night has ended. It lasted for {duration}.")
+        await ctx.send(f"Poker night has ended. It lasted for {duration}.")    
+
+    @bot.command(name='print', brief='Prints all data stored by the bot.', hidden=True)
+    async def print_all_data_command(ctx):
+        if ctx.author.guild_permissions.administrator:  # Adjust the permission check as needed
+            data_manager.print_all_data()
+            await ctx.send('Check the console for all data.')
+        else:
+            await ctx.send('You do not have the required permissions to use this command.') 
 
     @bot.command(name='house')
     async def check_house_chips(ctx):

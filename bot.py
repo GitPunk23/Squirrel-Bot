@@ -3,7 +3,8 @@ import discord
 import random
 from dotenv import load_dotenv
 from discord.ext import commands
-from pokernight import pokernight
+from poker_night import poker_night
+from data_manager import data_manager
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -11,10 +12,10 @@ GUILD = os.getenv('DISCORD_GUILD')
 
 intents = discord.Intents.all()
 intents.members = True
-intents.messages = True  # Add this line to enable message content intent
+intents.messages = True  
 bot = commands.Bot(command_prefix=':', intents=intents)
 
-pokernight.setup(bot)
+poker_night.setup(bot)
 
 @bot.event
 async def on_ready():
@@ -33,6 +34,8 @@ async def on_ready():
 
 #VARIABLES
 SMACKFLAG = True
+
+print(data_manager.print_all_data)
 
 #ON MESSAGE EVENTS
 @bot.event
