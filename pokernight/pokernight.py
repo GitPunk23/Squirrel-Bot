@@ -1,18 +1,48 @@
-# In pokernight/pokernight.py
 from discord.ext import commands
+from datetime import datetime, timedelta
+
+next_poker_night = datetime.utcnow() + timedelta(days=7)
+house_chips = 10000
+poker_night_flag = False
+poker_night_start_time = None
+poker_night_end_time = None
 
 def setup(bot):
-    @bot.command(name='start_poker_night')
+    @bot.command(name='poker')
     async def start_poker_night(ctx):
+        global poker_night_flag, poker_night_start_time
+
+        # Check if poker night is already running
+        if poker_night_flag:
+            await ctx.send("Poker night is already in progress.")
+            return
+
+        # Start poker night
+        poker_night_flag = True
+        poker_night_start_time = datetime.utcnow()
+
         await ctx.send("Let the poker night begin!")
 
-    @bot.command(name='say_hi')
-    async def say_hi(ctx):
-        # Check if the user who invoked the command said "hi"
-        if "hi" in ctx.message.content.lower():
-            await ctx.send("hi")
+    @bot.command(name='stop')
+    async def stop_poker_night(ctx):
+        global poker_night_flag, poker_night_start_time
 
-    @bot.command(name='test')
-    async def test_command(ctx):
-        await ctx.send("Testing command!")
+        if not poker_night_flag:
+            await ctx.send("Poker night is not in progress.")
+            return
+        
+        poker_night_flag = False
+        poker_night_end_time = datetime.utcnow()
+
+        # Calculate the duration of the poker night
+        duration = poker_night_end_time - poker_night_start_time
+
+        await ctx.send(f"Poker night has ended. It lasted for {duration}.")
+
+    @bot.command(name='house')
+    async def check_house_chips(ctx):
+        global house_chips
+
+        await ctx.send(f"The house currently has won {house_chips} chips.")
+
 
