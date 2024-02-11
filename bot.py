@@ -1,18 +1,21 @@
 import os
-
 import discord
 import random
 from dotenv import load_dotenv
 from discord.ext import commands
+from poker_night import poker_night
+from data_manager import data_manager
 
 load_dotenv()
-#print(os.getenv('DISCORD_TOKEN'))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-bot = commands.Bot(command_prefix=';')
 
-SMACKFLAG = True
+intents = discord.Intents.all()
+intents.members = True
+intents.messages = True  
+bot = commands.Bot(command_prefix=':', intents=intents)
 
+poker_night.setup(bot)
 
 @bot.event
 async def on_ready():
@@ -27,23 +30,12 @@ async def on_ready():
         f'{guild.name}(id: {guild.id})'
     )
 
-@bot.command(
-    brief='Prints an entry in the coordinates channel. Use: [Structure] [X coord] [Y coord] [Z coord] ["notes"]',
-    help='A command that will print out a list of coordinates in another channel for display.'
-)
-@commands.has_role('Crafter')
-async def coord(ctx, struc, x, y, z, notes=''): 
-    coordsCH = bot.get_channel(984518790681362492)
+# ------------------------------------------------------------------------------------
 
-    if x.isdigit() == False and y.isdigit() == False and z.isdigit() == False:
-        await ctx.send('Incorrect format\nExample: ;coord Mineshaft 50 15 -789 "A big mineshaft"\n(Description/Notes are optional)')
-        return
+#VARIABLES
+SMACKFLAG = True
 
-    printString = ctx.message.author.mention + ' found a ' + struc + ' at:\nX: ' + x + '\nY: ' + y + '\nZ: ' + z
-    if (notes != ''):
-        printString += '\nThey said: ' + notes
-    await coordsCH.send(printString)  
- 
+print(data_manager.print_all_data)
 
 #ON MESSAGE EVENTS
 @bot.event
