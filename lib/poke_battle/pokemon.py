@@ -25,27 +25,17 @@ class Pokemon:
             self.type_two = None
             
         self.ability = self.extract_ability(pokemon_data['abilities'])
-        self.base_stats = self.extract_stats(pokemon_data)
-        
+        self.base_stats = self.extract_stats(pokemon_data)     
         self.level = Pokemon.level
-        self.moves = self.extract_moves(pokemon_data['moves'], self.level)
+        
+        self.moves = self.process_moves(pokemon_data['moves'], self.level)
+        
         self.spriteURL = self.get_sprite_url(pokemon_data['sprites'])
         
         self.stats = self.calculate_stats()
         self.current_hp = self.stats['hp']
         self.status_condition = Pokemon.status_condition
-        
-        print(self.species)
-        print(self.type_one)
-        print(self.type_two)
-        print(self.ability)
-        print(self.base_stats)
-        print(self.moves)
-        print(self.spriteURL)
-        print(self.stats)
-        
-        
-        
+                      
 # --------------FETCH--------------------------------------------------------------------------------------------------------       
     def fetch_pokemon_by_number(self, pokemon_number):
         url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_number}"
@@ -111,15 +101,58 @@ class Pokemon:
             return random.choice(non_hidden_abilities)['ability']['name']
 
 #---------------MOVES--------------------------------------------------------------------------------------------------------
+    def process_moves(self, moves_data, pokemon_level):
+        move_list = []
+        moves = self.extract_moves(moves_data, pokemon_level)
+        
+        for move in moves:
+            move_data = self.fetch_move_info(move['url'])
+            
+            move_list.append({
+                'name': move_data.get('name'),  
+                'accuracy': move_data.get('accuracy'),  
+                'damage_class': move_data.get('damage_class', {}).get('name', 'Unknown'),  
+                'effect_chance': move_data.get('effect_chance'),  
+                'ailment': move_data.get('meta', {}).get('ailment', {}).get('name', 'None'), 
+                'ailment_chance': move_data.get('ailment_chance'), 
+                'crit_rate': move_data.get('crit_rate'), 
+                'drain': move_data.get('drain'), 
+                'flinch_chance': move_data.get('flinch_chance'), 
+                'healing': move_data.get('healing'), 
+                'max_hits': move_data.get('max_hits'), 
+                'max_turns': move_data.get('max_turns'), 
+                'min_hits': move_data.get('min_hits'),
+                'min_turns': move_data.get('min_turns'), 
+                'stat_chance': move_data.get('stat_chance'),  
+                'power': move_data.get('power'),  
+                'pp': move_data.get('pp'),  
+                'current_pp': move_data.get('pp'), 
+                'priority': move_data.get('priority'),
+                'stat_changes': move_data.get('stat_changes'),  
+                'target': move_data.get('target', {}).get('name', 'Unknown'), 
+                'type': move_data.get('type', {}).get('name', 'Unknown Type')  
+            })
+        print(move_list)
+        return move_list
+            
     def extract_moves(self, moves_data, pokemon_level):
         available_moves = []
         for move_info in moves_data:
             level_learned_at = move_info['version_group_details'][0]['level_learned_at']
             if level_learned_at <= pokemon_level:
-                available_moves.append(move_info['move']['name'])
+                available_moves.append(move_info['move'])
         random_moves = random.sample(available_moves, min(4, len(available_moves)))
         return random_moves
     
+    def fetch_move_info(self, move_url):
+        response = requests.get(move_url)
+        if response.status_code == 200:
+            move_data = response.json()
+            return move_data
+        else:
+            print(f"Failed to fetch move information. Status code: {response.status_code}")
+            return None
+        
 # --------------SPRITE-------------------------------------------------------------------------------------------------------
     def get_sprite_url(self, sprite_data):
         if random.randint(0, 9) < 1:  # 10% chance for shiny front
@@ -129,9 +162,6 @@ class Pokemon:
 
         return sprite_url
 
-
-
-    
 # --------------BATTLE------------------------------------------------------------------------------------------------------- 
     def attack(self, opponent):
         pass
