@@ -17,7 +17,7 @@ class PuzzleGames(commands.Cog):
         self.bandle_regex = re.compile(r'Bandle #\d+ ((?:\d+|x))/\d+\n[⬛🟩🟨🟥⬜]+\nFound: \d+/\d+ \(\d+%\)')  
         self.pokedoku_regex = re.compile(
             r'(?::red_circle:|🌟) PokeDoku (?:Summary|Champion) (?:⚪️|🌟)\n'
-            r'📅 \d{4}-\d{2}-\d{2}\n\n'
+            r'(?:By: .+|📅 \d{4}-\d{2}-\d{2})\n\n'
             r'Score: (\d+)/\d+\n'
             r'Uniqueness: (\d+)/\d+\n\n'
             r'([⬜⬛🟨🟩🟦🟪🟥✅\n ]+)\n\n'
@@ -115,6 +115,12 @@ class PuzzleGames(commands.Cog):
     
     async def update_player_score(self, player_id, game, result):
         json_file = 'lib/puzzle_games/player_data.json'
+        
+        if not os.path.exists(json_file):
+            os.makedirs(os.path.dirname(json_file), exist_ok=True)
+            with open(json_file, 'w') as f:
+                json.dump(initial_structure, f)
+        
         with open(json_file, 'r') as f:
             data = json.load(f)
 
@@ -228,14 +234,16 @@ class PuzzleGames(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
-        now = datetime.utcnow()
-        midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        delta = midnight - now
+        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+        est = pytz.timezone('US/Eastern')
+        now_est = now_utc.astimezone(est)
+        midnight_est = (now_est + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        delta = midnight_est - now_est
 
-        #await asyncio.sleep(delta.total_seconds())
-        await asyncio.sleep(6)
-        print("end wait")
+        print(f"Sleeping for {delta} seconds before beginning reset score task")
+        await asyncio.sleep(delta.total_seconds())
         await self.reset_daily_scores()
+        
         
 def setup(bot):
     bot.add_cog(PuzzleGames(bot))
