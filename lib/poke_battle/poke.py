@@ -79,4 +79,4 @@ class Poke(commands.Cog):
             
 
 async def setup(bot):
-    bot.add_cog(Poke(bot))
+    await bot.add_cog(Poke(bot))
