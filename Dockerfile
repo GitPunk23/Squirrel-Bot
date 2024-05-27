@@ -13,8 +13,8 @@ WORKDIR /usr/src/bot
 # Copy repo into container
 COPY . .
 
-# Create a directory for bot data
-RUN mkdir /usr/src/bot/data
+# Create a directory for bot data if it doesn't exist
+RUN mkdir -p /usr/src/bot/data
 
 # Set the command to run your bot.py script
 CMD [ "python3", "bot.py" ]
