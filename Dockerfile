@@ -10,9 +10,7 @@ RUN python -m pip install discord.py
 # Set the working directory
 WORKDIR /usr/src/bot
 
-# Copy only the necessary files into the container
-# COPY bot.py .
-# COPY .env .
+# Copy repo into container
 COPY . .
 
 # Create a directory for bot data
