@@ -119,7 +119,7 @@ class PuzzleGames(commands.Cog):
             data = json.load(f)
 
         if player_id not in data["players"]:
-            self.add_player(player_id, json_file)
+            await self.add_player(player_id, json_file)
             
         if game in data["players"][player_id]["today_scores"] and data["players"][player_id]["today_scores"][game] != 0:
             return False
@@ -201,6 +201,7 @@ class PuzzleGames(commands.Cog):
             
     @commands.command(name='join_puzzles')
     async def join_puzzles(self, ctx):
+        await ctx.message.delete()
         player_id = str(ctx.author.id)
         json_file = 'lib/puzzle_games/player_data.json'
         player_added = await self.add_player(player_id, json_file)
@@ -211,6 +212,7 @@ class PuzzleGames(commands.Cog):
 
     @commands.command(name='scoreboard')
     async def scoreboard(self, ctx):
+        await ctx.message.delete()
         await self.display_scoreboard(ctx)
         
     @tasks.loop(hours=24)
