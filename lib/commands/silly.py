@@ -16,7 +16,7 @@ async def buff_threat(ctx):
 def setup(bot):
     
     # ON MESSAGE EVENTS
-    @bot.event
+    #@bot.event
     async def on_message(message):
         await bot.process_commands(message)
         if message.author == bot.user:
