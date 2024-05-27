@@ -9,6 +9,7 @@ import asyncio
 
 class PuzzleGames(commands.Cog):
     def __init__(self, bot):
+        self.initialize_player_data()
         self.bot = bot
         self.wordle_regex = re.compile(r'Wordle \d{1,3}(?:,\d{3})* ((?:\d+|X))/6.*')
         self.connections_regex = re.compile(r'Connections\s+Puzzle\s+#(\d+)\n+(?:[⬛🟨🟦🟩🟪\n]+)')
@@ -176,6 +177,14 @@ class PuzzleGames(commands.Cog):
             embed.add_field(name=row[0], value=row_values_str, inline=False)
 
         await ctx.send(embed=embed)
+
+    def initialize_player_data():
+        json_file = 'lib/puzzle_games/player_data.json'
+        if not os.path.exists(json_file):
+            os.makedirs(os.path.dirname(json_file), exist_ok=True)
+            with open(json_file, 'w') as f:
+                initial_structure = {"players": {}}
+                json.dump(initial_structure, f)
 
     @commands.Cog.listener()
     async def on_message(self, message):
