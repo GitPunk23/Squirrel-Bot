@@ -115,7 +115,7 @@ class PuzzleGames(commands.Cog):
         return game, result
     
     async def update_player_score(self, player_id, game, result):
-        json_file = 'lib/puzzle_games/player_data.json'
+        json_file = 'data/puzzle_games/player_data.json'
         
         if not os.path.exists(json_file):
             os.makedirs(os.path.dirname(json_file), exist_ok=True)
@@ -150,7 +150,7 @@ class PuzzleGames(commands.Cog):
         return True
     
     async def display_scoreboard(self, ctx):
-        json_file = 'lib/puzzle_games/player_data.json'
+        json_file = 'data/puzzle_games/player_data.json'
         with open(json_file, 'r') as f:
             data = json.load(f)
 
@@ -179,7 +179,7 @@ class PuzzleGames(commands.Cog):
         await ctx.send(embed=embed)
 
     def initialize_player_data(self):
-        json_file = 'lib/puzzle_games/player_data.json'
+        json_file = 'data/puzzle_games/player_data.json'
         if not os.path.exists(json_file):
             os.makedirs(os.path.dirname(json_file), exist_ok=True)
             with open(json_file, 'w') as f:
@@ -218,7 +218,7 @@ class PuzzleGames(commands.Cog):
     async def join_puzzles(self, ctx):
         await ctx.message.delete()
         player_id = str(ctx.author.id)
-        json_file = 'lib/puzzle_games/player_data.json'
+        json_file = 'data/puzzle_games/player_data.json'
         player_added = await self.add_player(player_id, json_file)
         if (player_added):
             await ctx.send(f"{ctx.author.mention} has joined puzzle games!")
@@ -232,13 +232,13 @@ class PuzzleGames(commands.Cog):
         
     @tasks.loop(hours=24)
     async def reset_daily_scores(self):
-        with open('lib/puzzle_games/player_data.json', 'r') as f:
+        with open('data/puzzle_games/player_data.json', 'r') as f:
             data = json.load(f)
 
         for player_id, player_data in data["players"].items():
             player_data["today_scores"] = {game: 0 for game in player_data["today_scores"]}
 
-        with open('lib/puzzle_games/player_data.json', 'w') as f:
+        with open('data/puzzle_games/player_data.json', 'w') as f:
             json.dump(data, f, indent=4)
         
     @commands.Cog.listener()

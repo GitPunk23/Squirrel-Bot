@@ -4,7 +4,7 @@ FROM python:3
 RUN python -m pip install --upgrade pip
 RUN python -m pip install python-dotenv
 
-# Install discord.py
+# Install discord.py, requests
 RUN python -m pip install discord.py requests
 
 # Set the working directory
