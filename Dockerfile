@@ -5,7 +5,7 @@ RUN python -m pip install --upgrade pip
 RUN python -m pip install python-dotenv
 
 # Install discord.py
-RUN python -m pip install discord.py
+RUN python -m pip install discord.py requests
 
 # Set the working directory
 WORKDIR /usr/src/bot
