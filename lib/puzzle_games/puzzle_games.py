@@ -178,7 +178,7 @@ class PuzzleGames(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    def initialize_player_data():
+    def initialize_player_data(self):
         json_file = 'lib/puzzle_games/player_data.json'
         if not os.path.exists(json_file):
             os.makedirs(os.path.dirname(json_file), exist_ok=True)
