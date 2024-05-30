@@ -78,5 +78,5 @@ class Poke(commands.Cog):
         return embed
             
 
-async def setup(bot):
-    await bot.add_cog(Poke(bot))
+def setup(bot):
+    bot.add_cog(Poke(bot))

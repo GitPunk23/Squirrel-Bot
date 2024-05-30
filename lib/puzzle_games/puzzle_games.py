@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 import importlib.util
 import json
+import pytz
 import re
 import asyncio
 
@@ -23,6 +24,25 @@ class PuzzleGames(commands.Cog):
             r'Uniqueness: (\d+)/\d+\n\n'
             r'([⬜⬛🟨🟩🟦🟪🟥✅\n ]+)\n\n'
             r'Play at: https://pokedoku.com')
+        self.schedule_daily_reset()
+        
+    def schedule_daily_reset(self):
+        self.bot.loop.create_task(self._wait_until_midnight_and_start_reset())
+
+    async def _wait_until_midnight_and_start_reset(self):
+        await self.bot.wait_until_ready()
+
+        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+        est = pytz.timezone('US/Eastern')
+        now_est = now_utc.astimezone(est)
+        midnight_est = (now_est + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        delta = (midnight_est - now_est).total_seconds()
+
+        print(f"Sleeping for {delta} seconds before starting the daily reset task")
+        await asyncio.sleep(delta)
+
+        # Start the reset task loop
+        self.reset_daily_scores_task.start()
   
     async def parse_connections_score(self, message):
         player_id = str(message.author.id)
@@ -231,7 +251,7 @@ class PuzzleGames(commands.Cog):
         await self.display_scoreboard(ctx)
         
     @tasks.loop(hours=24)
-    async def reset_daily_scores(self):
+    async def reset_daily_scores_task(self):
         with open('data/puzzle_games/player_data.json', 'r') as f:
             data = json.load(f)
 
@@ -240,19 +260,8 @@ class PuzzleGames(commands.Cog):
 
         with open('data/puzzle_games/player_data.json', 'w') as f:
             json.dump(data, f, indent=4)
+            
+        print("Players scores have been reset!")
         
-    @commands.Cog.listener()
-    async def on_ready(self):
-        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
-        est = pytz.timezone('US/Eastern')
-        now_est = now_utc.astimezone(est)
-        midnight_est = (now_est + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        delta = midnight_est - now_est
-
-        print(f"Sleeping for {delta} seconds before beginning reset score task")
-        await asyncio.sleep(delta.total_seconds())
-        await self.reset_daily_scores()
-        
-        
-async def setup(bot):
-    await bot.add_cog(PuzzleGames(bot))
+def setup(bot):
+    bot.add_cog(PuzzleGames(bot))

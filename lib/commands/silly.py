@@ -13,7 +13,7 @@ async def buff_threat(ctx):
     return 
 
 # ATTACH TO BOT
-async def setup(bot):
+def setup(bot):
     
     # ON MESSAGE EVENTS
     #@bot.event
