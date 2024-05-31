@@ -7,6 +7,9 @@ import json
 import pytz
 import re
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PuzzleGames(commands.Cog):
     def __init__(self, bot):
@@ -38,7 +41,7 @@ class PuzzleGames(commands.Cog):
         midnight_est = (now_est + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         delta = (midnight_est - now_est).total_seconds()
 
-        print(f"Sleeping for {delta} seconds before starting the daily reset task")
+        logger.info(f"Sleeping for {delta} seconds before starting the daily reset task")
         await asyncio.sleep(delta)
 
         # Start the reset task loop
@@ -252,6 +255,7 @@ class PuzzleGames(commands.Cog):
         
     @tasks.loop(hours=24)
     async def reset_daily_scores_task(self):
+        logger.info("Beginning player score reset...")
         with open('data/puzzle_games/player_data.json', 'r') as f:
             data = json.load(f)
 
@@ -261,5 +265,5 @@ class PuzzleGames(commands.Cog):
         with open('data/puzzle_games/player_data.json', 'w') as f:
             json.dump(data, f, indent=4)
             
-        print("Players scores have been reset!")
+        logger.info("Players scores have been reset!")
         
