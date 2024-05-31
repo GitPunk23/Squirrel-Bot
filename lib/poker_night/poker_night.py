@@ -54,6 +54,3 @@ class PokerNight(commands.Cog):
     async def join_game(self, ctx):
         await silly.buff_threat(ctx)
         #await ctx.send("Placeholder for join_game command.")
-
-def setup(bot):
-    bot.add_cog(PokerNight(bot))

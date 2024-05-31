@@ -3,11 +3,11 @@ import discord
 import random
 from dotenv import load_dotenv
 from discord.ext import commands
-from lib.poker_night import poker_night
-from lib.commands import silly
+from lib.poker_night.poker_night import PokerNight
+from lib.commands.silly import Silly
 from lib.data_manager import data_manager
-from lib.poke_battle import poke
-from lib.puzzle_games import puzzle_games
+from lib.poke_battle.poke import Poke
+from lib.puzzle_games.puzzle_games import PuzzleGames
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -23,10 +23,10 @@ async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     # --------------------------------------------------------------------------------------------------
     # LOAD COMMANDS
-    poker_night.setup(bot)
-    silly.setup(bot)
-    poke.setup(bot)
-    puzzle_games.setup(bot)
+    bot.add_cog(PokerNight(bot))
+    bot.add_cog(Silly(bot))
+    bot.add_cog(Poke(bot))
+    bot.add_cog(PuzzleGames(bot))
 
 
 bot.run(TOKEN)

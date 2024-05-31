@@ -263,5 +263,3 @@ class PuzzleGames(commands.Cog):
             
         print("Players scores have been reset!")
         
-def setup(bot):
-    bot.add_cog(PuzzleGames(bot))
