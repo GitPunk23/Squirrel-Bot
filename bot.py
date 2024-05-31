@@ -28,10 +28,10 @@ async def on_ready():
 
 
 async def setup(client):
-    bot.add_cog(PokerNight(bot))
-    bot.add_cog(Silly(bot))
-    bot.add_cog(Poke(bot))
-    bot.add_cog(PuzzleGames(bot))
+    await bot.add_cog(PokerNight(bot))
+    await bot.add_cog(Silly(bot))
+    await bot.add_cog(Poke(bot))
+    await bot.add_cog(PuzzleGames(bot))
 
 
 bot.run(TOKEN)
