@@ -21,12 +21,14 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
-    # --------------------------------------------------------------------------------------------------
-    # LOAD COMMANDS
-    bot.add_cog(PokerNight(bot))
-    bot.add_cog(Silly(bot))
-    bot.add_cog(Poke(bot))
-    bot.add_cog(PuzzleGames(bot))
+    await setup(bot)
+
+
+async def setup(client):
+    await bot.add_cog(PokerNight(bot))
+    await bot.add_cog(Silly(bot))
+    await bot.add_cog(Poke(bot))
+    await bot.add_cog(PuzzleGames(bot))
 
 
 bot.run(TOKEN)
