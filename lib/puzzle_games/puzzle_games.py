@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
+from collections import defaultdict
 import importlib.util
 import json
 import pytz
@@ -31,6 +32,62 @@ class PuzzleGames(commands.Cog):
         
     def schedule_daily_reset(self):
         self.bot.loop.create_task(self._wait_until_midnight_and_start_reset())
+
+    def compare_players_by_game_wins(self, player1_scores, player2_scores, game_order):
+        player1_wins = 0
+        player2_wins = 0
+        for game in game_order:
+            player1_score = player1_scores.get(game, 0)
+            player2_score = player2_scores.get(game, 0)
+            loss_vs_not_played = player1_score == "X" and player2_score == "-"
+            win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
+            win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score < player2_score
+            
+            if loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win:
+                player1_wins += 1
+            else:
+                player2_wins += 1
+                
+        return player1_wins > player2_wins
+                
+    def compare_players_by_lowest_score(self, player1_scores, player2_scores, game_order):
+        
+        for game in game_order:
+            player1_score = player1_scores.get(game, 0)
+            player2_score = player2_scores.get(game, 0)
+
+            if player1_score == "X" or player1_score == "-":
+                return False  
+            elif player2_score == "X" or player2_score == "-":
+                return True  
+            else:
+                if player1_score != player2_score:
+                    return player1_score < player2_score
+                
+    def compare_players_by_total_wins(self, player1_scores, player2_scores, game_order):
+        player1_wins = 0
+        player2_wins = 0
+        for game in game_order:
+            player1_score = player1_scores.get(game, 0)
+            player2_score = player2_scores.get(game, 0)
+            loss_vs_not_played = player1_score == "X" and player2_score == "-"
+            win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
+            win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score > player2_score
+            
+            if loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win:
+                player1_wins += 1
+            else:
+                player2_wins += 1
+                
+        return player1_wins > player2_wins
+
+    def compare_players(self, player1_scores, player2_scores, game_order, mode):
+        if mode == 0:
+            return self.compare_players_by_total_wins(player1_scores, player2_scores, game_order)
+        elif mode == 1:
+            return self.compare_players_by_game_wins(player1_scores, player2_scores, game_order)
+        else:
+            return self.compare_players_by_lowest_score(player1_scores, player2_scores, game_order)
 
     async def _wait_until_midnight_and_start_reset(self):
         await self.bot.wait_until_ready()
@@ -137,6 +194,22 @@ class PuzzleGames(commands.Cog):
          
         return game, result
     
+    async def sort_players_by_wins(self, data, game_order, scores_type, mode):
+        players_list = list(data.items())
+
+        n = len(players_list)
+
+        for i in range(n - 1):
+            for j in range(n - 1 - i):
+                player1_id, player1_data = players_list[j]
+                player2_id, player2_data = players_list[j + 1]
+
+                if self.compare_players(player1_data[scores_type], player2_data[scores_type], game_order, mode):  
+                    players_list[j], players_list[j + 1] = players_list[j + 1], players_list[j]
+
+        sorted_players_data = dict(players_list)
+        return sorted_players_data
+    
     async def update_player_score(self, player_id, game, result):
         json_file = 'data/puzzle_games/player_data.json'
         
@@ -178,26 +251,55 @@ class PuzzleGames(commands.Cog):
             data = json.load(f)
 
         game_order = ["wordle", "connections", "costcodle", "spotle", "bandle", "pokedoku"]
+        header_row = [game.capitalize() for game in game_order]
 
-        header_row = ["Player"] + [game.capitalize() for game in game_order]
-
-        table_rows = [header_row]
-        for player_id, player_data in data["players"].items():
-            user = await self.bot.fetch_user(int(player_id))
-            if user:
-                player_name = user.display_name
-            else:
-                player_name = f"Unknown User (ID: {player_id})"
-            row = [f"{player_name}"] 
-            for game in game_order:
-                score = player_data["today_scores"].get(game, "-")
-                row.append("-" if score == 0 else score)
-            table_rows.append(row)
+        sorted_players = await self.sort_players_by_wins(data["players"], game_order, "today_scores", 0)
 
         embed = discord.Embed(title="Today's Scores", color=discord.Color.blue())
-        for row in table_rows:
-            row_values_str = " | ".join(str(cell) for cell in row)
-            embed.add_field(name=row[0], value=row_values_str, inline=False)
+        header_str = f"| {' | '.join(header_row)} |"
+        embed.add_field(name="Games", value=header_str, inline=False)
+
+        for player_id in sorted_players:
+            try:
+                user = await self.bot.fetch_user(int(player_id))
+                player_name = user.name
+            except discord.errors.NotFound:
+                player_name = f"Unknown User (ID: {player_id})"
+            row = [player_name]
+            for game in game_order:
+                score = data["players"][player_id]["today_scores"].get(game, float('inf'))
+                row.append("-" if score == float('inf') or score == 0 else score)
+            row_values_str = f"| {' | '.join(str(cell) for cell in row[1:])} |"
+            embed.add_field(name=player_name, value=row_values_str, inline=False)
+
+        await ctx.send(embed=embed)
+        
+    async def display_leaderboard(self, ctx):
+        json_file = 'data/puzzle_games/player_data.json'
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+
+        game_order = ["wordle", "connections", "costcodle", "spotle", "bandle", "pokedoku"]
+        header_row = [game.capitalize() for game in game_order]
+
+        sorted_players = await self.sort_players_by_wins(data["players"], game_order, "total_scores", 1)
+
+        embed = discord.Embed(title="Total Scores", color=discord.Color.blue())
+        header_str = f"| {' | '.join(header_row)} |"
+        embed.add_field(name="Games", value=header_str, inline=False)
+
+        for player_id in sorted_players:
+            try:
+                user = await self.bot.fetch_user(int(player_id))
+                player_name = user.name
+            except discord.errors.NotFound:
+                player_name = f"Unknown User (ID: {player_id})"
+            row = [player_name]
+            for game in game_order:
+                score = data["players"][player_id]["total_scores"].get(game, float('inf'))
+                row.append("-" if score == float('inf') or score == 0 else score)
+            row_values_str = f"| {' | '.join(str(cell) for cell in row[1:])} |"
+            embed.add_field(name=player_name, value=row_values_str, inline=False)
 
         await ctx.send(embed=embed)
 
@@ -247,6 +349,11 @@ class PuzzleGames(commands.Cog):
             await ctx.send(f"{ctx.author.mention} has joined puzzle games!")
         else:
             await ctx.send(f"{ctx.author.mention} is already registered for puzzles")
+
+    @commands.command(name='leaderboard')
+    async def leaderboard(self, ctx):
+        await ctx.message.delete()
+        await self.display_leaderboard(ctx)
 
     @commands.command(name='scoreboard')
     async def scoreboard(self, ctx):

@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from lib.poker_night.poker_night import PokerNight
 from lib.commands.silly import Silly
-from lib.data_manager import data_manager
 from lib.poke_battle.poke import Poke
 from lib.puzzle_games.puzzle_games import PuzzleGames
 
