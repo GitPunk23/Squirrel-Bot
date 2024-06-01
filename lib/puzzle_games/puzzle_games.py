@@ -34,21 +34,25 @@ class PuzzleGames(commands.Cog):
         self.bot.loop.create_task(self._wait_until_midnight_and_start_reset())
 
     def compare_players_by_game_wins(self, player1_scores, player2_scores, game_order):
-        player1_wins = 0
-        player2_wins = 0
-        for game in game_order:
-            player1_score = player1_scores.get(game, 0)
-            player2_score = player2_scores.get(game, 0)
-            loss_vs_not_played = player1_score == "X" and player2_score == "-"
-            win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
-            win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score < player2_score
-            
-            if loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win:
-                player1_wins += 1
-            else:
-                player2_wins += 1
+            player1_wins = 0
+            player2_wins = 0
+            for game in game_order:
+                player1_score = player1_scores.get(game, 0)
+                player2_score = player2_scores.get(game, 0)
+                loss_vs_not_played = player1_score == "X" and player2_score == "-"
+                win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
+                win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score > player2_score
+                player1_win = loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win
+                tie = player1_score == player2_score
                 
-        return player1_wins > player2_wins
+                if player1_win:
+                    player1_wins += 1
+                elif tie:  
+                    continue
+                else:
+                    player2_wins += 1
+                    
+            return player1_wins > player2_wins
                 
     def compare_players_by_lowest_score(self, player1_scores, player2_scores, game_order):
         
@@ -72,10 +76,14 @@ class PuzzleGames(commands.Cog):
             player2_score = player2_scores.get(game, 0)
             loss_vs_not_played = player1_score == "X" and player2_score == "-"
             win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
-            win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score > player2_score
+            win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score < player2_score
+            player1_win = loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win
+            tie = player1_score == player2_score
             
-            if loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win:
+            if player1_win:
                 player1_wins += 1
+            elif tie:  
+                continue
             else:
                 player2_wins += 1
                 
@@ -198,14 +206,13 @@ class PuzzleGames(commands.Cog):
         players_list = list(data.items())
 
         n = len(players_list)
-
         for i in range(n - 1):
             for j in range(n - 1 - i):
                 player1_id, player1_data = players_list[j]
                 player2_id, player2_data = players_list[j + 1]
-
-                if self.compare_players(player1_data[scores_type], player2_data[scores_type], game_order, mode):  
+                if not self.compare_players(player1_data[scores_type], player2_data[scores_type], game_order, mode):  
                     players_list[j], players_list[j + 1] = players_list[j + 1], players_list[j]
+        
 
         sorted_players_data = dict(players_list)
         return sorted_players_data
