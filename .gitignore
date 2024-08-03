@@ -1,5 +1,5 @@
 .env
 *.pyc
 lib/**/*.json
+bot-data/
 data/
-
