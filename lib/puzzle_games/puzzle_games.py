@@ -154,7 +154,6 @@ class PuzzleGames(commands.Cog):
             return False
     
         data["players"][player_id] = {
-            "total_scores": {},
             "today_scores": {}
         }
         
@@ -233,15 +232,6 @@ class PuzzleGames(commands.Cog):
             
         if game in data["players"][player_id]["today_scores"] and data["players"][player_id]["today_scores"][game] != 0:
             return False
-            
-        if result == 'X':
-            score_value = 0
-        else:
-            score_value = 1
-
-        if game not in data["players"][player_id]["total_scores"]:
-            data["players"][player_id]["total_scores"][game] = 0
-        data["players"][player_id]["total_scores"][game] += score_value
 
         if game not in data["players"][player_id]["today_scores"]:
             data["players"][player_id]["today_scores"][game] = 0
@@ -252,7 +242,7 @@ class PuzzleGames(commands.Cog):
             
         return True
     
-    async def display_scoreboard(self, ctx):
+    async def display_scoreboard(self):
         json_file = 'data/puzzle_games/player_data.json'
         with open(json_file, 'r') as f:
             data = json.load(f)
@@ -279,36 +269,7 @@ class PuzzleGames(commands.Cog):
             row_values_str = f"| {' | '.join(str(cell) for cell in row[1:])} |"
             embed.add_field(name=player_name, value=row_values_str, inline=False)
 
-        await ctx.send(embed=embed)
-        
-    async def display_leaderboard(self, ctx):
-        json_file = 'data/puzzle_games/player_data.json'
-        with open(json_file, 'r') as f:
-            data = json.load(f)
-
-        game_order = ["wordle", "connections", "costcodle", "spotle", "bandle", "pokedoku"]
-        header_row = [game.capitalize() for game in game_order]
-
-        sorted_players = await self.sort_players_by_wins(data["players"], game_order, "total_scores", 1)
-
-        embed = discord.Embed(title="Total Scores", color=discord.Color.blue())
-        header_str = f"| {' | '.join(header_row)} |"
-        embed.add_field(name="Games", value=header_str, inline=False)
-
-        for player_id in sorted_players:
-            try:
-                user = await self.bot.fetch_user(int(player_id))
-                player_name = user.name
-            except discord.errors.NotFound:
-                player_name = f"Unknown User (ID: {player_id})"
-            row = [player_name]
-            for game in game_order:
-                score = data["players"][player_id]["total_scores"].get(game, float('inf'))
-                row.append("-" if score == float('inf') or score == 0 else score)
-            row_values_str = f"| {' | '.join(str(cell) for cell in row[1:])} |"
-            embed.add_field(name=player_name, value=row_values_str, inline=False)
-
-        await ctx.send(embed=embed)
+        return embed
 
     def initialize_player_data(self):
         json_file = 'data/puzzle_games/player_data.json'
@@ -357,18 +318,15 @@ class PuzzleGames(commands.Cog):
         else:
             await ctx.send(f"{ctx.author.mention} is already registered for puzzles")
 
-    @commands.command(name='leaderboard')
-    async def leaderboard(self, ctx):
-        await ctx.message.delete()
-        await self.display_leaderboard(ctx)
-
     @commands.command(name='scoreboard')
     async def scoreboard(self, ctx):
         await ctx.message.delete()
-        await self.display_scoreboard(ctx)
+        #await self.display_scoreboard(ctx)
+        await ctx.send(embed=await self.display_scoreboard())
         
     @tasks.loop(hours=24)
     async def reset_daily_scores_task(self):
+        await self.display_scoreboard()
         logger.info("Beginning player score reset...")
         with open('data/puzzle_games/player_data.json', 'r') as f:
             data = json.load(f)
