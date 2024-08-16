@@ -55,7 +55,7 @@ class PuzzleGames(commands.Cog):
                 player1_score = player1_scores.get(game, 0)
                 player2_score = player2_scores.get(game, 0)
                 result = self.compare_score(player1_score, player2_score)
-                if result is null:
+                if result is None:
                     continue
                 elif result:
                     player1 += 1
