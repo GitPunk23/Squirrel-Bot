@@ -5,12 +5,14 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import importlib.util
 import json
-import pytz
 import re
 import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
+NOT_PLAYED = '-'
+LOST = 'X'
+game_order = ["wordle", "connections", "costcodle", "spotle", "bandle", "pokedoku"]
 
 class PuzzleGames(commands.Cog):
     def __init__(self, bot):
@@ -32,70 +34,44 @@ class PuzzleGames(commands.Cog):
         
     def schedule_daily_reset(self):
         self.bot.loop.create_task(self._wait_until_midnight_and_start_reset())
-
-    def compare_players_by_game_wins(self, player1_scores, player2_scores, game_order):
-            player1_wins = 0
-            player2_wins = 0
+    
+    def compare_score(self, player1_score, player2_score):
+        draw = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score == player2_score
+        if draw:
+            return
+        win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score > player2_score
+        win_vs_loss = (isinstance(player1_score, int) and player2_score in ('X', '-'))
+        loss_vs_unplayed = player1_score == 'X' and player2_score == '-'
+        return win_vs_win or win_vs_loss or loss_vs_unplayed
+    
+    def compare_players(self, player1_scores, player2_scores):
+        if self.get_wins(player1_scores) > self.get_wins(player1_scores):
+            return true
+        
+        if self.get_wins(player1_scores) == self.get_wins(player1_scores):
+            player1 = 0
+            player2 = 0
             for game in game_order:
                 player1_score = player1_scores.get(game, 0)
                 player2_score = player2_scores.get(game, 0)
-                loss_vs_not_played = player1_score == "X" and player2_score == "-"
-                win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
-                win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score > player2_score
-                player1_win = loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win
-                tie = player1_score == player2_score
-                
-                if player1_win:
-                    player1_wins += 1
-                elif tie:  
+                result = self.compare_score(player1_score, player2_score)
+                if result is null:
                     continue
-                else:
-                    player2_wins += 1
+                elif result:
+                    player1 += 1
+                else: 
+                    player2 += 1
                     
-            return player1_wins > player2_wins
-                
-    def compare_players_by_lowest_score(self, player1_scores, player2_scores, game_order):
-        
-        for game in game_order:
-            player1_score = player1_scores.get(game, 0)
-            player2_score = player2_scores.get(game, 0)
-
-            if player1_score == "X" or player1_score == "-":
-                return False  
-            elif player2_score == "X" or player2_score == "-":
-                return True  
-            else:
-                if player1_score != player2_score:
-                    return player1_score < player2_score
-                
-    def compare_players_by_total_wins(self, player1_scores, player2_scores, game_order):
-        player1_wins = 0
-        player2_wins = 0
-        for game in game_order:
-            player1_score = player1_scores.get(game, 0)
-            player2_score = player2_scores.get(game, 0)
-            loss_vs_not_played = player1_score == "X" and player2_score == "-"
-            win_vs_loss_or_unplayed = isinstance(player1_score, int) and (player2_score == "X" or player2_score == "-")
-            win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score < player2_score
-            player1_win = loss_vs_not_played or win_vs_loss_or_unplayed or win_vs_win
-            tie = player1_score == player2_score
+            return player1 > player2 or player1 == player2
             
-            if player1_win:
-                player1_wins += 1
-            elif tie:  
-                continue
-            else:
-                player2_wins += 1
+    def get_wins(self, player_scores):
+        player_score = 0
+        for game in game_order:
+            game_score = player_scores.get(game, 0)
+            if isinstance(game_score, int):
+                player_score += 1
                 
-        return player1_wins > player2_wins
-
-    def compare_players(self, player1_scores, player2_scores, game_order, mode):
-        if mode == 0:
-            return self.compare_players_by_total_wins(player1_scores, player2_scores, game_order)
-        elif mode == 1:
-            return self.compare_players_by_game_wins(player1_scores, player2_scores, game_order)
-        else:
-            return self.compare_players_by_lowest_score(player1_scores, player2_scores, game_order)
+        return player_score
 
     async def _wait_until_midnight_and_start_reset(self):
         await self.bot.wait_until_ready()
@@ -201,20 +177,19 @@ class PuzzleGames(commands.Cog):
          
         return game, result
     
-    async def sort_players_by_wins(self, data, game_order, scores_type, mode):
+    async def sort_players(self, data):
         players_list = list(data.items())
+        scores_type = "today_scores"
 
         n = len(players_list)
         for i in range(n - 1):
             for j in range(n - 1 - i):
                 player1_id, player1_data = players_list[j]
                 player2_id, player2_data = players_list[j + 1]
-                if not self.compare_players(player1_data[scores_type], player2_data[scores_type], game_order, mode):  
+                if not self.compare_players(player1_data[scores_type], player2_data[scores_type]):  
                     players_list[j], players_list[j + 1] = players_list[j + 1], players_list[j]
         
-
-        sorted_players_data = dict(players_list)
-        return sorted_players_data
+        return dict(players_list)
     
     async def update_player_score(self, player_id, game, result):
         json_file = 'data/puzzle_games/player_data.json'
@@ -247,10 +222,9 @@ class PuzzleGames(commands.Cog):
         with open(json_file, 'r') as f:
             data = json.load(f)
 
-        game_order = ["wordle", "connections", "costcodle", "spotle", "bandle", "pokedoku"]
         header_row = [game.capitalize() for game in game_order]
 
-        sorted_players = await self.sort_players_by_wins(data["players"], game_order, "today_scores", 0)
+        sorted_players = await self.sort_players(data["players"])
 
         embed = discord.Embed(title="Today's Scores", color=discord.Color.blue())
         header_str = f"| {' | '.join(header_row)} |"
@@ -321,12 +295,13 @@ class PuzzleGames(commands.Cog):
     @commands.command(name='scoreboard')
     async def scoreboard(self, ctx):
         await ctx.message.delete()
-        #await self.display_scoreboard(ctx)
         await ctx.send(embed=await self.display_scoreboard())
         
     @tasks.loop(hours=24)
-    async def reset_daily_scores_task(self):
-        await self.display_scoreboard()
+    async def reset_daily_scores_task(self, ctx):
+        logger.info("Displaying Scoreboard")
+        await ctx.send(embed=await self.display_scoreboard())
+        
         logger.info("Beginning player score reset...")
         with open('data/puzzle_games/player_data.json', 'r') as f:
             data = json.load(f)
