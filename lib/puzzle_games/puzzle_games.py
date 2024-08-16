@@ -73,6 +73,19 @@ class PuzzleGames(commands.Cog):
                 player_score += 1
                 
         return player_score
+    
+    def wipe_scores(self):
+        logger.info("Beginning player score reset...")
+        with open('data/puzzle_games/player_data.json', 'r') as f:
+            data = json.load(f)
+
+        for player_id, player_data in data["players"].items():
+            player_data["today_scores"] = {game: 0 for game in player_data["today_scores"]}
+
+        with open('data/puzzle_games/player_data.json', 'w') as f:
+            json.dump(data, f, indent=4)
+            
+        logger.info("Players scores have been reset!")
 
     async def _wait_until_midnight_and_start_reset(self):
         await self.bot.wait_until_ready()
@@ -87,7 +100,7 @@ class PuzzleGames(commands.Cog):
         await asyncio.sleep(delta)
 
         # Start the reset task loop
-        self.reset_daily_scores_task.start()
+        self.reset_daily_scores_task.start(ctx)
   
     async def parse_connections_score(self, message):
         player_id = str(message.author.id)
@@ -298,20 +311,15 @@ class PuzzleGames(commands.Cog):
         await ctx.message.delete()
         await ctx.send(embed=await self.display_scoreboard())
         
+    @commands.command(name='wipe_scores')
+    @commands.has_permissions(administrator=True)
+    async def wipe_scores(self, ctx):
+        await ctx.message.delete()
+        self.wipe_scores()
+        
     @tasks.loop(hours=24)
     async def reset_daily_scores_task(self, ctx):
         logger.info("Displaying Scoreboard")
         await ctx.send(embed=await self.display_scoreboard())
-        
-        logger.info("Beginning player score reset...")
-        with open('data/puzzle_games/player_data.json', 'r') as f:
-            data = json.load(f)
-
-        for player_id, player_data in data["players"].items():
-            player_data["today_scores"] = {game: 0 for game in player_data["today_scores"]}
-
-        with open('data/puzzle_games/player_data.json', 'w') as f:
-            json.dump(data, f, indent=4)
-            
-        logger.info("Players scores have been reset!")
+        self.wipe_scores()
         
