@@ -311,9 +311,9 @@ class PuzzleGames(commands.Cog):
         await ctx.message.delete()
         await ctx.send(embed=await self.display_scoreboard())
         
-    @commands.command(name='wipe_scores')
+    @commands.command(name='wipe')
     @commands.has_permissions(administrator=True)
-    async def wipe_scores(self, ctx):
+    async def force_wipe(self, ctx):
         await ctx.message.delete()
         self.wipe_scores()
         
