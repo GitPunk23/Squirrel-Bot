@@ -31,7 +31,9 @@ class PuzzleGames(commands.Cog):
             r'Uniqueness: (\d+)/\d+\n\n'
             r'([⬜⬛🟨🟩🟦🟪🟥✅\n ]+)\n\n'
             r'Play at: https://pokedoku.com')
-        self.schedule_daily_reset()
+        channel_name = 'bot spam'
+        self.channel = discord.utils.get(client.get_all_channels(), name=channel_name)
+        self.schedule_daily_reset(self.channel.id)
         
     def schedule_daily_reset(self):
         self.bot.loop.create_task(self._wait_until_midnight_and_start_reset())
