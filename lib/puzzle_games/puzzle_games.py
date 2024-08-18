@@ -31,9 +31,7 @@ class PuzzleGames(commands.Cog):
             r'Uniqueness: (\d+)/\d+\n\n'
             r'([⬜⬛🟨🟩🟦🟪🟥✅\n ]+)\n\n'
             r'Play at: https://pokedoku.com')
-        channel_name = 'bot spam'
-        self.channel = discord.utils.get(client.get_all_channels(), name=channel_name)
-        self.schedule_daily_reset(self.channel.id)
+        self.schedule_daily_reset()
         
     def schedule_daily_reset(self):
         self.bot.loop.create_task(self._wait_until_midnight_and_start_reset())
@@ -102,7 +100,7 @@ class PuzzleGames(commands.Cog):
         await asyncio.sleep(delta)
 
         # Start the reset task loop
-        self.reset_daily_scores_task.start(ctx)
+        self.reset_daily_scores_task.start()
   
     async def parse_connections_score(self, message):
         player_id = str(message.author.id)
@@ -322,6 +320,8 @@ class PuzzleGames(commands.Cog):
     @tasks.loop(hours=24)
     async def reset_daily_scores_task(self, ctx):
         logger.info("Displaying Scoreboard")
-        await ctx.send(embed=await self.display_scoreboard())
+        channel_name = 'bot spam'
+        channel = discord.utils.get(client.get_all_channels(), name=channel_name)
+        await channel.send(embed=await self.display_scoreboard())
         self.wipe_scores()
         
