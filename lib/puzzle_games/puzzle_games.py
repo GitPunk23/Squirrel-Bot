@@ -318,7 +318,7 @@ class PuzzleGames(commands.Cog):
         self.wipe_scores()
         
     @tasks.loop(hours=24)
-    async def reset_daily_scores_task(self, ctx):
+    async def reset_daily_scores_task(self):
         logger.info("Displaying Scoreboard")
         channel_name = 'bot spam'
         channel = discord.utils.get(client.get_all_channels(), name=channel_name)
