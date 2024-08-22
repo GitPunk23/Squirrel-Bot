@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 NOT_PLAYED = '-'
 LOST = 'X'
 game_order = ["wordle", "connections", "costcodle", "spotle", "bandle", "pokedoku"]
+channel_id = 775062415381364767
 
 class PuzzleGames(commands.Cog):
     def __init__(self, bot):
@@ -43,13 +44,14 @@ class PuzzleGames(commands.Cog):
         win_vs_win = (isinstance(player1_score, int) and isinstance(player2_score, int)) and player1_score > player2_score
         win_vs_loss = (isinstance(player1_score, int) and player2_score in ('X', '-'))
         loss_vs_unplayed = player1_score == 'X' and player2_score == '-'
-        return win_vs_win or win_vs_loss or loss_vs_unplayed
+        unplayed_vs_unplayed = player1_score == '-' and player2_score == '-'
+        return win_vs_win or win_vs_loss or loss_vs_unplayed or unplayed_vs_unplayed
     
     def compare_players(self, player1_scores, player2_scores):
-        if self.get_wins(player1_scores) > self.get_wins(player1_scores):
+        if self.get_wins(player1_scores) > self.get_wins(player2_scores):
             return true
         
-        if self.get_wins(player1_scores) == self.get_wins(player1_scores):
+        if self.get_wins(player1_scores) == self.get_wins(player2_scores):
             player1 = 0
             player2 = 0
             for game in game_order:
@@ -231,7 +233,7 @@ class PuzzleGames(commands.Cog):
             
         return True
     
-    async def display_scoreboard(self):
+    async def get_scoreboard(self):
         json_file = 'data/puzzle_games/player_data.json'
         with open(json_file, 'r') as f:
             data = json.load(f)
@@ -244,6 +246,7 @@ class PuzzleGames(commands.Cog):
         header_str = f"| {' | '.join(header_row)} |"
         embed.add_field(name="Games", value=header_str, inline=False)
 
+        position = 1
         for player_id in sorted_players:
             try:
                 user = await self.bot.fetch_user(int(player_id))
@@ -255,7 +258,10 @@ class PuzzleGames(commands.Cog):
                 score = data["players"][player_id]["today_scores"].get(game, float('inf'))
                 row.append("-" if score == float('inf') or score == 0 else score)
             row_values_str = f"| {' | '.join(str(cell) for cell in row[1:])} |"
-            embed.add_field(name=player_name, value=row_values_str, inline=False)
+            
+            position_and_name = f"{position} - {player_name}"
+            embed.add_field(name=position_and_name, value=row_values_str, inline=False)
+            position+=1
 
         return embed
 
@@ -309,7 +315,7 @@ class PuzzleGames(commands.Cog):
     @commands.command(name='scoreboard')
     async def scoreboard(self, ctx):
         await ctx.message.delete()
-        await ctx.send(embed=await self.display_scoreboard())
+        await ctx.send(embed=await self.get_scoreboard())
         
     @commands.command(name='wipe')
     @commands.has_permissions(administrator=True)
@@ -321,7 +327,7 @@ class PuzzleGames(commands.Cog):
     async def reset_daily_scores_task(self):
         logger.info("Displaying Scoreboard")
         channel_name = 'bot spam'
-        channel = discord.utils.get(client.get_all_channels(), name=channel_name)
-        await channel.send(embed=await self.display_scoreboard())
+        channel = self.bot.get_channel(channel_id)
+        await channel.send(embed=await self.get_scoreboard())
         self.wipe_scores()
         
