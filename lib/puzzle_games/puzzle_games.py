@@ -82,7 +82,7 @@ class PuzzleGames(commands.Cog):
             data = json.load(f)
 
         for player_id, player_data in data["players"].items():
-            player_data["today_scores"] = {game: 0 for game in player_data["today_scores"]}
+            player_data["today_scores"] = {game: "-" for game in player_data["today_scores"]}
 
         with open('data/puzzle_games/player_data.json', 'w') as f:
             json.dump(data, f, indent=4)
