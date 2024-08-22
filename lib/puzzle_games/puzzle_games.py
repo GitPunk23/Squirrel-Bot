@@ -49,7 +49,7 @@ class PuzzleGames(commands.Cog):
     
     def compare_players(self, player1_scores, player2_scores):
         if self.get_wins(player1_scores) > self.get_wins(player2_scores):
-            return true
+            return True
         
         if self.get_wins(player1_scores) == self.get_wins(player2_scores):
             player1 = 0
