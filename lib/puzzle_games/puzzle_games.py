@@ -325,9 +325,9 @@ class PuzzleGames(commands.Cog):
         
     @tasks.loop(hours=24)
     async def reset_daily_scores_task(self):
-        logger.info("Displaying Scoreboard")
-        channel_name = 'bot spam'
-        channel = self.bot.get_channel(channel_id)
-        await channel.send(embed=await self.get_scoreboard())
+        #logger.info("Displaying Scoreboard")
+        #channel_name = 'bot spam'
+        #channel = self.bot.get_channel(channel_id)
+        #await channel.send(embed=await self.get_scoreboard())
         self.wipe_scores()
         
